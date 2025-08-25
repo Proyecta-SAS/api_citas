@@ -1,11 +1,11 @@
 <?php
 header("Content-Type: application/json");
 
-// V.1
+// V.2
 
 $body = file_get_contents("php://input");
 if (!$body) {
-    echo json_encode(["error" => "No se recibió ningún cuerpo en la solicitud"]);
+    echo json_encode(["error" => "No se recibió ningún cuerpo en la solicitud" . $body]);
     exit;
 }
 
