@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 
-// V1
+// V.1
 
 $body = file_get_contents("php://input");
 if (!$body) {

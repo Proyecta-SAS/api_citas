@@ -1,4 +1,4 @@
-#Disponibilidad de citas (PHP + Python) – README v3
+#Disponibilidad de citas (PHP + Python) – README v1
 
 Sistema sencillo para calcular disponibilidad horaria en los próximos 8 días (desde mañana), excluyendo domingos y festivos de Colombia, a partir de un listado de citas existentes.
 El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays.
