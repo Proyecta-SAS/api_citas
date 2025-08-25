@@ -4,7 +4,7 @@ import holidays
 import sys
 from collections import defaultdict
 
-#V.4.2
+#V.5
 
 def obtener_festivos_y_domingos():
     año = date.today().year
