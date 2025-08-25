@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// v.4.1
+// v.4.2
 
 $body = file_get_contents("php://input");
 

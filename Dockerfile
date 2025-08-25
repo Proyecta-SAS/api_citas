@@ -20,3 +20,6 @@ ENV PORT=8080
 
 # Comando de arranque: servidor embebido de PHP
 CMD php -S 0.0.0.0:$PORT -t public
+
+
+
