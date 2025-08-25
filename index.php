@@ -1,18 +1,17 @@
 <?php
 header("Content-Type: application/json");
 
-// V.2
+// v.3.0
 
 $body = file_get_contents("php://input");
-
 if (!$body) {
-    echo json_encode(["error" => "No se recibió ningún cuerpo en la solicitud" . $body]);
+    echo json_encode(["error" => "No se recibió ningún cuerpo en la solicitud"]);
     exit;
 }
 
 $data = json_decode($body, true);
 if (!$data || !isset($data['citas'])) {
-    echo json_encode(["error" => "Se requiere el campo 'citas'" . $body]);
+    echo json_encode(["error" => "Se requiere el campo 'citas'"]);
     exit;
 }
 
