@@ -11,13 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// v.5.2
+// v.6
 
 $body = file_get_contents("php://input");
-
-
-
-if ($body === false || $body === '') {
+if (!$body) {
     echo json_encode(["error" => "No se recibió ningún cuerpo en la solicitud"]);
     exit;
 }
@@ -28,10 +25,10 @@ if (!$data || !isset($data['citas'])) {
     exit;
 }
 
-$citas_json = json_encode($data['citas'], JSON_UNESCAPED_UNICODE);
+$citas_json = json_encode($data['citas']);
 $escaped_citas = escapeshellarg($citas_json);
 
-
+// Ejecutar el script de Python
 $cmd = "python3 main.py $escaped_citas";
 exec($cmd, $output, $status);
 
