@@ -1,10 +1,23 @@
 <?php
+// CORS
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json");
 
-// v.3.0
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+// v.3.1
 
 $body = file_get_contents("php://input");
-if (!$body) {
+
+
+
+if ($body === false || $body === '') {
     echo json_encode(["error" => "No se recibió ningún cuerpo en la solicitud"]);
     exit;
 }
@@ -15,10 +28,10 @@ if (!$data || !isset($data['citas'])) {
     exit;
 }
 
-$citas_json = json_encode($data['citas']);
+$citas_json = json_encode($data['citas'], JSON_UNESCAPED_UNICODE);
 $escaped_citas = escapeshellarg($citas_json);
 
-// Ejecutar el script de Python
+
 $cmd = "python3 main.py $escaped_citas";
 exec($cmd, $output, $status);
 

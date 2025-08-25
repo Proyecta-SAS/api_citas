@@ -4,7 +4,7 @@ import holidays
 import sys
 from collections import defaultdict
 
-#V.3.0
+#V.3.1
 
 
 def obtener_festivos_y_domingos():
