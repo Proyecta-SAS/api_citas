@@ -1,0 +1,25 @@
+[build]
+builder = "NIXPACKS"
+
+[nixpacks]
+pkgs = [
+  "nginx",
+  "php83",
+  "php83Packages.composer",
+  "nodejs_18",
+  "python311",
+  "python311Packages.pip",
+  "tzdata"
+]
+
+[phases.install]
+cmds = ["pip install --no-cache-dir -r requirements.txt"]
+
+[start]
+cmd = """
+node /assets/scripts/prestart.mjs /assets/nginx.template.conf /nginx.conf \
+&& (php-fpm -y /assets/php-fpm.conf & nginx -c /nginx.conf)
+"""
+
+[variables]
+TZ = "America/Bogota"
