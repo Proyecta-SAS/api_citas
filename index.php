@@ -21,6 +21,7 @@ if (!$body) {
 
 $data = json_decode($body, true);
 if (!$data || !isset($data['citas'])) {
+    http_response_code(400);
     echo json_encode(["error" => "Se requiere el campo 'citas'"]);
     exit;
 }
@@ -33,6 +34,7 @@ $cmd = "python3 main.py $escaped_citas";
 exec($cmd, $output, $status);
 
 if ($status !== 0) {
+    http_response_code(500);
     echo json_encode(["error" => "Error al ejecutar el script Python"]);
     exit;
 }
