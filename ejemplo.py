@@ -12,15 +12,6 @@ result = [{},{}]
 def main():
     url = ensure_trailing_slash(BASE_URL)
 
-    # payload = {
-    #   "citas": {
-    #     "result": [
-    #       { "DATE_FROM": "26/08/2025 09:00:00", "DATE_TO": "26/08/2025 10:00:00" },
-    #       { "DATE_FROM": "27/08/2025 14:30:00", "DATE_TO": "27/08/2025 16:00:00" }
-    #     ]
-    #   }
-    # }
-    
     payload = {
       "citas": {
         "result": [
@@ -29,6 +20,10 @@ def main():
         ]
       }
     }
+    
+    # payload = {
+    #   "citas": "holas"
+    # }
 
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     headers = {

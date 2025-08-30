@@ -42,7 +42,7 @@ $cmd = "python3 main.py $escaped_citas 2>&1";
 exec($cmd, $output, $status);
 
 if ($status !== 0) {
-    http_response_code(502);
+    http_response_code(500);
     echo json_encode([
         "error" => "Error al ejecutar el script Python",
         "detail" => implode("\n", $output),
