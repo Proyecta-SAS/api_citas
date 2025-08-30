@@ -30,7 +30,7 @@ if (
     !is_array($data['citas']['result'])
 ) {
     http_response_code(500); // lo tratamos como error del servidor
-    echo json_encode(["error" => "Estructura de JSON inválida"]);
+    echo json_encode(["error" => "Estructura de JSON invalida"]);
     exit;
 }
 
@@ -42,10 +42,11 @@ $cmd = "python3 main.py $escaped_citas 2>&1";
 exec($cmd, $output, $status);
 
 if ($status !== 0) {
-    http_response_code(500);
+    http_response_code(502);
     echo json_encode([
         "error" => "Error al ejecutar el script Python",
-        "detail" => implode("\n", $output)
+        "detail" => implode("\n", $output),
+        "code" => 502
     ]);
     exit;
 }
