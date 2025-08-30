@@ -46,7 +46,7 @@ if ($status !== 0) {
     echo json_encode([
         "error" => "Error al ejecutar el script Python",
         "detail" => implode("\n", $output),
-        "code" => 502
+        "code" => 500
     ]);
     exit;
 }
