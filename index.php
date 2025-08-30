@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// v.6
+// v.7
 
 $body = file_get_contents("php://input");
 if (!$body) {
@@ -22,7 +22,7 @@ if (!$body) {
 $data = json_decode($body, true);
 if (!$data || !isset($data['citas'])) {
     http_response_code(400);
-    echo json_encode(["error" => "Se requiere el campo 'citas'"]);
+    echo json_encode(["error" => "Se requiere el campo 'citas' en formato JSON {citas: { result: [ { DATE_FROM: '', DATE_TO: '' } ] } }"]);
     exit;
 }
 
