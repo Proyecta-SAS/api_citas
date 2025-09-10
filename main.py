@@ -48,7 +48,10 @@ def main():
     fecha_fin = hoy + timedelta(days=7)
     festivos_y_domingos = obtener_festivos_y_domingos()
 
-    horas_trabajo = [(hour, hour + 1) for hour in range(8, 17)]  # 8:00 a 17:00
+    # Configuración de slots: 20 minutos entre 08:00 y 17:00
+    slot_minutes = 20
+    start_minutes = 8 * 60
+    end_minutes = 17 * 60  # límite superior (exclusivo)
     disponibilidad_por_dia = {}
 
     current_date = hoy

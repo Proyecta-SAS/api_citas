@@ -52,7 +52,8 @@ Dentro de citas se espera un objeto con el arreglo result, donde cada elemento c
 
 
 
-El cálculo revisa bloques de 1 hora entre 08:00 y 17:00 (8–9, 9–10, …, 16–17).
+El cálculo revisa bloques de 20 minutos entre 08:00 y 17:00
+(08:00–08:20, 08:20–08:40, …, 16:40–17:00).
 Cualquier solapamiento con una cita existente bloquea ese intervalo.
 
 
@@ -121,7 +122,7 @@ Calcula desde mañana hasta 7 días después (8 días en total).
 
 Omite domingos y festivos de Colombia (holidays.CountryHoliday('CO')).
 
-Genera bloques horarios de 1 hora entre 08:00–17:00.
+Genera bloques de 20 minutos entre 08:00–17:00.
 
 Marca un bloque como ocupado si se solapa con cualquier cita dada.
 
@@ -132,9 +133,11 @@ Devuelve la lista de días con sus bloques disponibles.
 
 #Personalización
 
-Horario laboral: edita en main.py
+Horario laboral y tamaño de bloque: edita en main.py
 
-horas_trabajo = [(hour, hour + 1) for hour in range(8, 17)]
+slot_minutes = 20            # tamaño del bloque en minutos
+start_minutes = 8 * 60       # 08:00
+end_minutes = 17 * 60        # 17:00 (exclusivo)
 
 
 hoy = datetime.now().date() + timedelta(days=1)
