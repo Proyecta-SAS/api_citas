@@ -1,4 +1,4 @@
-#Disponibilidad de citas (PHP + Python) – README v9.1
+#Disponibilidad de citas (PHP + Python) – README v9.2
 
 Sistema sencillo para calcular disponibilidad horaria en los próximos 8 días (desde mañana), excluyendo domingos y festivos de Colombia, a partir de un listado de citas existentes.
 El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays. Soporta:
@@ -91,7 +91,6 @@ Payload de ejemplo (similar a envio.json):
   "Cantidad_dias": 3,
   "filtro": {
     "dias_habiles": ["Lunes"],
-    "horario": { "desde": "08:00", "hasta": "13:00" },
     "jornada": 1
   },
   "citas": {  // opcional: bloquea solapes si se incluye
@@ -103,7 +102,11 @@ Payload de ejemplo (similar a envio.json):
 
 Comportamiento:
 - Devuelve sólo los próximos 3 lunes (desde mañana), excluyendo domingos y festivos de Colombia.
-- Genera slots de 30 minutos entre 08:00 y 13:00.
+- Genera slots de 30 minutos según la jornada:
+  - jornada 1: 08:00–12:00
+  - jornada 2: 12:00–17:00
+  - jornada 3: 08:00–17:00
+- Si también envías "horario.desde/hasta", ese horario sobreescribe a la jornada.
 - Si se incluyen "citas", no se listan los slots que se solapen.
 - Si se especifican varios días en "dias_habiles", se devuelven hasta "Cantidad_dias" ocurrencias por cada día de la semana seleccionado.
 - Si no se especifica "dias_habiles", se consideran días laborales (lunes a sábado), excluyendo domingos y festivos.

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date, time
 import holidays
 import sys
 
-# V.9.1 — Modo clásico (citas) + modo filtros (envio.json) + calendario Bitrix (calendar[].body.result)
+# V.9.2 — Modo clásico (citas) + modo filtros (envio.json) + calendario Bitrix (calendar[].body.result)
 
 
 def normalizar_dia_es(d: str) -> str:
@@ -64,24 +64,21 @@ def extraer_citas_de_calendar(calendar_json):
     return citas
 
 
-def parsear_horario(horario_json):
-    # Retorna tupla (time_desde, time_hasta) o valores por defecto 08:00-17:00
-    por_defecto = (time(8, 0, 0), time(17, 0, 0))
+def parsear_horario(horario_json, por_defecto=(time(8, 0, 0), time(17, 0, 0))):
+    # Retorna tupla (time_desde, time_hasta) usando por_defecto si faltan claves
     if not isinstance(horario_json, dict):
         return por_defecto
     desde_s = horario_json.get("desde")
     hasta_s = horario_json.get("hasta")
     try:
+        t_desde = por_defecto[0]
+        t_hasta = por_defecto[1]
         if desde_s:
             h, m = [int(x) for x in desde_s.split(":", 1)]
             t_desde = time(h, m, 0)
-        else:
-            t_desde = por_defecto[0]
         if hasta_s:
             h2, m2 = [int(x) for x in hasta_s.split(":", 1)]
             t_hasta = time(h2, m2, 0)
-        else:
-            t_hasta = por_defecto[1]
         return (t_desde, t_hasta)
     except Exception:
         return por_defecto
@@ -188,7 +185,22 @@ def main():
             if key in SPANISH_DAY_TO_WEEKDAY:
                 dias_wd.add(SPANISH_DAY_TO_WEEKDAY[key])
 
-        t_desde, t_hasta = parsear_horario(filtro.get("horario", {}))
+        # Jornada: 1 => 08:00-12:00, 2 => 12:00-17:00, 3 => 08:00-17:00
+        jornada = filtro.get("jornada")
+        jornada_pair = (time(8, 0, 0), time(17, 0, 0))
+        try:
+            jn = int(jornada) if jornada is not None else None
+            if jn == 1:
+                jornada_pair = (time(8, 0, 0), time(12, 0, 0))
+            elif jn == 2:
+                jornada_pair = (time(12, 0, 0), time(17, 0, 0))
+            elif jn == 3:
+                jornada_pair = (time(8, 0, 0), time(17, 0, 0))
+        except Exception:
+            pass
+
+        # Horario explícito (si viene) sobrescribe a jornada
+        t_desde, t_hasta = parsear_horario(filtro.get("horario", {}), por_defecto=jornada_pair)
         cantidad_dias = payload.get("Cantidad_dias")
         try:
             cantidad_dias = int(cantidad_dias) if cantidad_dias is not None else None

@@ -100,7 +100,6 @@ def main(argv):
         "Cantidad_dias": 3,
         "filtro": {
             "dias_habiles": ["Lunes"],
-            "horario": {"desde": "08:00", "hasta": "13:00"},
             "jornada": 1
         },
         # Se envía el calendario crudo como lo recibiste

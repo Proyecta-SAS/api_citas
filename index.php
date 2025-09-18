@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// v.9.1 — Acepta payload general (citas, filtro y calendar Bitrix)
+// v.9.2 — Acepta payload general (citas, filtro y calendar Bitrix)
 
 $body = file_get_contents("php://input");
 if (!$body) {
