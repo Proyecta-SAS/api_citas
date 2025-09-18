@@ -1,7 +1,10 @@
-#Disponibilidad de citas (PHP + Python) – README v6
+#Disponibilidad de citas (PHP + Python) – README v9.1
 
 Sistema sencillo para calcular disponibilidad horaria en los próximos 8 días (desde mañana), excluyendo domingos y festivos de Colombia, a partir de un listado de citas existentes.
-El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays.
+El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays. Soporta:
+- Modo clásico (con citas existentes)
+- Modo por filtros (similar a envio.json)
+- Calendario estilo Bitrix (calendar[].body.result)
 
 Nota rápida: el archivo que recibiste como index.py es código PHP. Renómbralo a index.php para evitar confusiones.
 
@@ -9,7 +12,7 @@ Nota rápida: el archivo que recibiste como index.py es código PHP. Renómbralo
 #Estructura
 .
 ├─ index.php       # Endpoint HTTP (antes llamado index.py)
-└─ main.py         # Motor de cálculo de disponibilidad
+└─ main.py         # Motor de cálculo de disponibilidad (modos: clásico y filtros)
 
 
 
@@ -30,7 +33,7 @@ URL: POST /
 Content-Type: application/json
 
 
-#Cuerpo de la solicitud
+#Cuerpo de la solicitud (modo clásico)
 
 El JSON debe incluir el campo citas.
 Dentro de citas se espera un objeto con el arreglo result, donde cada elemento contiene DATE_FROM y DATE_TO en formato DD/MM/YYYY HH:MM:SS.
@@ -77,6 +80,58 @@ Arreglo de días (desde mañana durante 8 días), cada uno con sus intervalos di
 ]
 
 
+## Modo por filtros (nuevo)
+
+Permite definir días hábiles específicos, horario y tamaño de slot, y limitar cuántas ocurrencias por día de la semana devolver.
+
+Payload de ejemplo (similar a envio.json):
+
+{
+  "minutos": 30,
+  "Cantidad_dias": 3,
+  "filtro": {
+    "dias_habiles": ["Lunes"],
+    "horario": { "desde": "08:00", "hasta": "13:00" },
+    "jornada": 1
+  },
+  "citas": {  // opcional: bloquea solapes si se incluye
+    "result": [
+      { "DATE_FROM": "23/09/2025 09:00:00", "DATE_TO": "23/09/2025 10:00:00" }
+    ]
+  }
+}
+
+Comportamiento:
+- Devuelve sólo los próximos 3 lunes (desde mañana), excluyendo domingos y festivos de Colombia.
+- Genera slots de 30 minutos entre 08:00 y 13:00.
+- Si se incluyen "citas", no se listan los slots que se solapen.
+- Si se especifican varios días en "dias_habiles", se devuelven hasta "Cantidad_dias" ocurrencias por cada día de la semana seleccionado.
+- Si no se especifica "dias_habiles", se consideran días laborales (lunes a sábado), excluyendo domingos y festivos.
+
+
+## Calendario estilo Bitrix (nuevo)
+
+Además del bloque "citas", puedes enviar el calendario crudo obtenido de Bitrix en este shape, y el backend lo transformará internamente para bloquear solapes:
+
+"calendar": [
+  {
+    "body": {
+      "result": [
+        { "DATE_FROM": "19/09/2025 19:00:00", "DATE_TO": "19/09/2025 19:20:00", ... },
+        ...
+      ],
+      "time": { ... }
+    },
+    "headers": { ... },
+    "statusCode": 200
+  }
+]
+
+Notas:
+- Si envías ambos, "citas" y "calendar", se combinan para marcar ocupación.
+- El parser usa los campos "DATE_FROM" y "DATE_TO" de cada evento.
+
+
 
 #Errores posibles
 
@@ -84,7 +139,7 @@ Sin cuerpo en la solicitud:
 
 { "error": "No se recibió ningún cuerpo en la solicitud" }
 
-{ "error": "Se requiere el campo 'citas'" }
+{ "error": "Se requiere 'citas' o 'filtro' en el payload" }
 
 { "error": "Error al interpretar JSON de citas: <detalle>" }
 

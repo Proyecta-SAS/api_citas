@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// v.7
+// v.9.1 — Acepta payload general (citas, filtro y calendar Bitrix)
 
 $body = file_get_contents("php://input");
 if (!$body) {
@@ -20,25 +20,20 @@ if (!$body) {
 }
 
 $data = json_decode($body, true);
-
-// Validar estructura de "citas"
-if (
-    !$data || 
-    !isset($data['citas']) || 
-    !is_array($data['citas']) ||   // 👈 fuerza a que sea array/obj
-    !isset($data['citas']['result']) || 
-    !is_array($data['citas']['result'])
-) {
-    http_response_code(500); // lo tratamos como error del servidor
-    echo json_encode(["error" => "Estructura de JSON invalida"]);
+if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    echo json_encode(["error" => "JSON inválido en el cuerpo de la solicitud"]);
     exit;
 }
 
-$citas_json = json_encode($data['citas']);
-$escaped_citas = escapeshellarg($citas_json);
+// Ya no exigimos estructura mínima: puede venir 'citas', 'filtro', 'calendar',
+// o incluso un arreglo de eventos (result) o arreglo Bitrix.
+// Pasamos el payload completo a Python para normalizar.
+$payload_json = json_encode($data);
+$escaped_payload = escapeshellarg($payload_json);
 
 // Ejecutar el script de Python
-$cmd = "python3 main.py $escaped_citas 2>&1";
+$cmd = "python3 main.py $escaped_payload 2>&1";
 exec($cmd, $output, $status);
 
 if ($status !== 0) {

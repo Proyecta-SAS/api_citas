@@ -1,0 +1,22 @@
+{
+    "resultado" : {
+        "mensaje": "Hola Mundo",
+        "fachada": "v1.0"
+    },
+
+    "minutos": 30,
+    
+    "Cantidad_dias" : 5,
+    
+    "filtro" : {
+        "dias_habiles" : ["Lunes", "Miercoles", "Viernes"],
+
+        "horario" : {
+            "desde" : "08:00",
+            "hasta" : "13:00"
+        },
+
+        "jornada" : 1
+    }
+
+}
