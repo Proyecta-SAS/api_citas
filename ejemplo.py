@@ -43,33 +43,172 @@ def load_calendar(argv):
         except Exception as e:
             print(f"No se pudo leer {candidate}: {e}. Usando muestra mínima.")
 
-    # Muestra mínima con el mismo shape
+    # Muestra mínima con el mismo shape, igual a lo solicitado
     return [
         {
             "body": {
-                "result": [
-                    {
-                        "ID": "sample-1",
-                        "DATE_FROM": "26/09/2025 09:00:00",
-                        "DATE_TO": "26/09/2025 09:30:00",
-                        "TZ_FROM": "America/Bogota",
-                        "TZ_TO": "America/Bogota"
+            "result": [
+                {
+                    "ID": "914272",
+                    "PARENT_ID": "914266",
+                    "ACTIVE": "Y",
+                    "DELETED": "N",
+                    "CAL_TYPE": "user",
+                    "OWNER_ID": "17890",
+                    "NAME": "Excelencia Katterine Rincón",
+                    "DATE_FROM": "22/09/2025 09:00:00",
+                    "DATE_TO": "22/09/2025 09:15:00",
+                    "ORIGINAL_DATE_FROM": None,
+                    "TZ_FROM": "America/Bogota",
+                    "TZ_TO": "America/Bogota",
+                    "TZ_OFFSET_FROM": "-18000",
+                    "TZ_OFFSET_TO": "-18000",
+                    "DATE_FROM_TS_UTC": "1747652400",
+                    "DATE_TO_TS_UTC": "1766385000",
+                    "DT_SKIP_TIME": "N",
+                    "DT_LENGTH": 900,
+                    "EVENT_TYPE": None,
+                    "CREATED_BY": "17890",
+                    "DATE_CREATE": "20/05/2025 21:51:00",
+                    "TIMESTAMP_X": "16/09/2025 04:48:24",
+                    "DESCRIPTION": "",
+                    "DT_FROM": None,
+                    "DT_TO": None,
+                    "PRIVATE_EVENT": "",
+                    "ACCESSIBILITY": "busy",
+                    "IMPORTANCE": "normal",
+                    "IS_MEETING": True,
+                    "MEETING_STATUS": "Y",
+                    "MEETING_HOST": "1127",
+                    "MEETING": {
+                        "NOTIFY": True,
+                        "MEETING_CREATOR": 1127,
+                        "REINVITE": False,
+                        "ALLOW_INVITE": False,
+                        "HIDE_GUESTS": True,
+                        "HOST_NAME": "Daimer Garcia",
+                        "LANGUAGE_ID": "la",
+                        "MAIL_FROM": "",
+                        "CHAT_ID": 0
                     },
-                    {
-                        "ID": "sample-2",
-                        "DATE_FROM": "29/09/2025 10:00:00",
-                        "DATE_TO": "29/09/2025 11:00:00",
-                        "TZ_FROM": "America/Bogota",
-                        "TZ_TO": "America/Bogota"
-                    }
-                ],
-                "time": {
-                    "start": 0, "finish": 0, "duration": 0, "processing": 0,
-                    "date_start": "", "date_finish": "", "operating": 0
+                    "LOCATION": "",
+                    "REMIND": [
+                        {
+                            "type": "min",
+                            "count": 0
+                        },
+                        {
+                            "type": "min",
+                            "count": 5
+                        }
+                    ],
+                    "COLOR": "",
+                    "TEXT_COLOR": "",
+                    "RRULE": {
+                        "FREQ": "WEEKLY",
+                        "COUNT": 32,
+                        "INTERVAL": 1,
+                        "BYDAY": {
+                            "MO": "MO"
+                        },
+                        "UNTIL": "01/01/2038",
+                        "~UNTIL": "",
+                        "UNTIL_TS": 2145916800
+                    },
+                    "EXDATE": "15/09/2025;09/06/2025;23/06/2025;07/07/2025",
+                    "DAV_XML_ID": "20250519T140000Z-82a9304c457f248914dff05e6e974c94@avanzarsoluciones.bitrix24.es",
+                    "G_EVENT_ID": "",
+                    "DAV_EXCH_LABEL": "",
+                    "CAL_DAV_LABEL": "",
+                    "VERSION": "20",
+                    "ATTENDEES_CODES": [
+                        "U1127",
+                        "U17890"
+                    ],
+                    "RECURRENCE_ID": None,
+                    "RELATIONS": "",
+                    "SECTION_ID": "6884",
+                    "SYNC_STATUS": None,
+                    "UF_CRM_CAL_EVENT": False,
+                    "UF_WEBDAV_CAL_EVENT": False,
+                    "SECTION_DAV_XML_ID": None,
+                    "DATE_FROM_FORMATTED": "Mon Sep 22 2025 09:00:00",
+                    "DATE_TO_FORMATTED": "Mon Sep 22 2025 09:15:00",
+                    "IS_DAYLIGHT_SAVING_TZ": "N",
+                    "SECT_ID": "6884",
+                    "OPTIONS": None,
+                    "ATTENDEE_LIST": [
+                        {
+                            "id": 1127,
+                            "entryId": "914266",
+                            "status": "H"
+                        },
+                        {
+                            "id": 17890,
+                            "entryId": "914272",
+                            "status": "Y"
+                        }
+                    ],
+                    "COLLAB_ID": None,
+                    "~RRULE_DESCRIPTION": "semanalmente: Lun, desde 19/05/2025, 32 tiempo(s)",
+                    "attendeesEntityList": [
+                        {
+                            "entityId": "user",
+                            "id": 1127
+                        },
+                        {
+                            "entityId": "user",
+                            "id": 17890
+                        }
+                    ],
+                    "~DATE_FROM": "19/05/2025 09:00:00",
+                    "~DATE_TO": "19/05/2025 09:15:00",
+                    "RINDEX": 1,
+                    "~USER_OFFSET_FROM": 0,
+                    "~USER_OFFSET_TO": 0
                 }
-            },
-            "headers": {"content-type": "application/json"},
-            "statusCode": 200
+            ],
+            "time": {
+                "start": 1758314944.790063,
+                "finish": 1758314944.834991,
+                "duration": 0.04492807388305664,
+                "processing": 0.019826173782348633,
+                "date_start": "2025-09-19T23:49:04+03:00",
+                "date_finish": "2025-09-19T23:49:04+03:00",
+                "operating_reset_at": 1758315544,
+                "operating": 0
+            }
+        },
+        "headers": {
+            "server": "nginx",
+            "date": "Fri, 19 Sep 2025 20:49:04 GMT",
+            "content-type": "application/json; charset=utf-8",
+            "transfer-encoding": "chunked",
+            "connection": "close",
+            "p3p": "policyref=\"/bitrix/p3p.xml\", CP=\"NON DSP COR CUR ADM DEV PSA PSD OUR UNR BUS UNI COM NAV INT DEM STA\"",
+            "x-powered-cms": "Bitrix Site Manager (bc2cad9153cb418bb2dfd5602c3c3754)",
+            "expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+            "cache-control": "no-store, no-cache, must-revalidate",
+            "pragma": "no-cache",
+            "set-cookie": [
+                "qmb=0.; path=/"
+            ],
+            "x-bitrix24-date": "1584139988",
+            "x-bitrix24-user": "0.",
+            "access-control-allow-origin": "*",
+            "access-control-allow-headers": "origin, content-type, accept",
+            "x-content-type-options": "nosniff, nosniff",
+            "x-bitrix-rest-application": "local.685d5063933614.00854686",
+            "x-bitrix-rest-time": "0.0198261738",
+            "x-bitrix-rest-user-time": "0.0092240000",
+            "x-bitrix-rest-system-time": "0.0048570000",
+            "x-frame-options": "SAMEORIGIN",
+            "strict-transport-security": "max-age=31536000; includeSubdomains",
+            "server-timing": "t1;dur=0.180, t2;dur=0.179, t3;dur=0.000, tc1;dur=117500, tc2;dur=18750, tc3;dur=20",
+            "x-bitrix-ri": "b6be4e95e4acf11fea4078e3d6598581",
+            "x-bitrix-lb": "lb-sa"
+        },
+        "statusCode": 200
         }
     ]
 
@@ -99,7 +238,6 @@ def main(argv):
         "minutos": 30,
         "Cantidad_dias": 3,
         "filtro": {
-            "dias_habiles": ["Lunes"],
             "jornada": 1
         },
         # Se envía el calendario crudo como lo recibiste

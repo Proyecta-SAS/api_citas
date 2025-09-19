@@ -1,4 +1,4 @@
-#Disponibilidad de citas (PHP + Python) – README v9.2
+#Disponibilidad de citas (PHP + Python) – README v9.3
 
 Sistema sencillo para calcular disponibilidad horaria en los próximos 8 días (desde mañana), excluyendo domingos y festivos de Colombia, a partir de un listado de citas existentes.
 El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays. Soporta:
@@ -112,6 +112,25 @@ Comportamiento:
 - Si no se especifica "dias_habiles", se consideran días laborales (lunes a sábado), excluyendo domingos y festivos.
 
 
+## Cantidad_dias sin filtro (nuevo)
+
+Si envías `Cantidad_dias` sin el bloque `filtro`, el sistema devuelve los próximos N días válidos consecutivos a partir de mañana, excluyendo domingos y festivos de Colombia, en lugar de la ventana fija de 8 días.
+
+Ejemplo:
+
+{
+  "Cantidad_dias": 3,
+  "minutos": 20,
+  "citas": {
+    "result": [
+      { "DATE_FROM": "26/09/2025 09:00:00", "DATE_TO": "26/09/2025 10:00:00" }
+    ]
+  }
+}
+
+Si hoy es lunes, retornará disponibilidad para martes, miércoles y jueves.
+
+
 ## Calendario estilo Bitrix (nuevo)
 
 Además del bloque "citas", puedes enviar el calendario crudo obtenido de Bitrix en este shape, y el backend lo transformará internamente para bloquear solapes:
@@ -176,11 +195,12 @@ Devuelve el stdout del script Python.
 
 main.py:
 
-Calcula desde mañana hasta 7 días después (8 días en total).
+Por defecto, calcula desde mañana hasta 7 días después (8 días en total).
+Si envías `Cantidad_dias` sin `filtro`, entonces calcula los próximos N días válidos consecutivos (desde mañana), excluyendo domingos y festivos.
 
 Omite domingos y festivos de Colombia (holidays.CountryHoliday('CO')).
 
-Genera bloques de 20 minutos entre 08:00–17:00.
+Genera bloques de 20 minutos entre 08:00–17:00 (o el tamaño indicado en `minutos`).
 
 Marca un bloque como ocupado si se solapa con cualquier cita dada.
 
@@ -197,6 +217,18 @@ slot_minutes = 20            # tamaño del bloque en minutos
 start_minutes = 8 * 60       # 08:00
 end_minutes = 17 * 60        # 17:00 (exclusivo)
 
+
+#Changelog
+
+- v9.3
+  - Nuevo: `Cantidad_dias` sin `filtro` devuelve los próximos N días válidos consecutivos desde mañana (excluye domingos y festivos de Colombia).
+  - `minutos` actúa globalmente para el tamaño de slot (si no se especifica, por defecto 20).
+  - Documentación actualizada (ejemplos Postman y calendario Bitrix).
+
+- v9.2
+  - Agregado modo por filtros (`filtro.dias_habiles`, `filtro.jornada`/`filtro.horario`).
+  - Soporte de calendario estilo Bitrix (`calendar[].body.result`).
+  - Combinación de `citas` + `calendar` para bloquear solapes.
 
 hoy = datetime.now().date() + timedelta(days=1)
 fecha_fin = hoy + timedelta(days=7)
