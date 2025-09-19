@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date, time
 import holidays
 import sys
 
-# V.9.3 — Modo clásico (citas) + modo filtros (envio.json) + calendario Bitrix (calendar[].body.result)
+# V.9.4 — Modo clásico (citas) + modo filtros (envio.json) + calendario Bitrix (calendar[].body.result)
 
 
 def normalizar_dia_es(d: str) -> str:
@@ -185,15 +185,10 @@ def main():
 
     filtro = payload.get("filtro") if isinstance(payload, dict) else None
 
+    # 1) Determinar horario base (jornada u horario explícito si viene filtro)
+    t_desde, t_hasta = time(8, 0, 0), time(17, 0, 0)
+    dias_wd_filtro = None
     if isinstance(filtro, dict):
-        # Modo nuevo por filtros (como envio.json)
-        dias_habiles_raw = filtro.get("dias_habiles", []) or []
-        dias_wd = set()
-        for dname in dias_habiles_raw:
-            key = normalizar_dia_es(str(dname))
-            if key in SPANISH_DAY_TO_WEEKDAY:
-                dias_wd.add(SPANISH_DAY_TO_WEEKDAY[key])
-
         # Jornada: 1 => 08:00-12:00, 2 => 12:00-17:00, 3 => 08:00-17:00
         jornada = filtro.get("jornada")
         jornada_pair = (time(8, 0, 0), time(17, 0, 0))
@@ -207,75 +202,45 @@ def main():
                 jornada_pair = (time(8, 0, 0), time(17, 0, 0))
         except Exception:
             pass
-
-        # Horario explícito (si viene) sobrescribe a jornada
+        # Horario explícito (si viene) sobreescribe a jornada
         t_desde, t_hasta = parsear_horario(filtro.get("horario", {}), por_defecto=jornada_pair)
-        # Si se indicó Cantidad_dias, se interpreta como la cantidad por día de semana seleccionado
-        cantidad_dias = cantidad_dias_global
 
-        # Si no se especifican días hábiles, consideramos todos los días laborales (lun-sab) excepto domingos
-        if not dias_wd:
-            dias_wd = {0, 1, 2, 3, 4, 5}
+        # Días hábiles del filtro (opcional)
+        dias_habiles_raw = filtro.get("dias_habiles", []) or []
+        if dias_habiles_raw:
+            dias_wd_filtro = set()
+            for dname in dias_habiles_raw:
+                key = normalizar_dia_es(str(dname))
+                if key in SPANISH_DAY_TO_WEEKDAY:
+                    dias_wd_filtro.add(SPANISH_DAY_TO_WEEKDAY[key])
 
-        # Contadores por día de semana si se dio Cantidad_dias
-        counts = {wd: 0 for wd in dias_wd}
-
-        d = hoy
-        max_loop_days = 365 * 2  # límite de seguridad
-        loops = 0
-        while True:
+    # 2) Construir lista de días válidos base según Cantidad_dias (o ventana por defecto)
+    dias_validos = []
+    d = hoy
+    max_loop_days = 365 * 2
+    loops = 0
+    if isinstance(cantidad_dias_global, int) and cantidad_dias_global > 0:
+        while len(dias_validos) < cantidad_dias_global and loops < max_loop_days:
             loops += 1
-            if loops > max_loop_days:
-                break
-
-            # Saltar domingos y festivos
-            if d.weekday() == 6 or d in festivos_co:
-                d += timedelta(days=1)
-                continue
-
-            wd = d.weekday()
-            if wd in dias_wd:
-                # Si se configuró cantidad_dias, verificar por día de semana
-                if cantidad_dias is None or counts.get(wd, 0) < cantidad_dias:
-                    slots = generar_slots_para_dia(d, t_desde, t_hasta, slot_minutes, citas_parsed)
-                    disponibilidad_por_dia[d.isoformat()] = slots
-                    if cantidad_dias is not None:
-                        counts[wd] = counts.get(wd, 0) + 1
-
-            # Condición de término cuando todos alcanzan cantidad_dias
-            if cantidad_dias is not None and dias_wd and all(counts[wd] >= cantidad_dias for wd in dias_wd):
-                break
-
+            if d.weekday() != 6 and d not in festivos_co:
+                dias_validos.append(d)
+            d += timedelta(days=1)
+    else:
+        fecha_fin = hoy + timedelta(days=7)
+        while d <= fecha_fin and loops < max_loop_days:
+            loops += 1
+            if d.weekday() != 6 and d not in festivos_co:
+                dias_validos.append(d)
             d += timedelta(days=1)
 
-    else:
-        # Modo clásico: si viene Cantidad_dias, tomar los próximos N días válidos (excluyendo domingos y festivos)
-        # empezando desde mañana; si no, mantener ventana por defecto de 8 días.
-        t_desde, t_hasta = time(8, 0, 0), time(17, 0, 0)
+    # 3) Aplicar filtro de días hábiles si corresponde
+    if isinstance(dias_wd_filtro, set) and dias_wd_filtro:
+        dias_validos = [di for di in dias_validos if di.weekday() in dias_wd_filtro]
 
-        d = hoy
-        if isinstance(cantidad_dias_global, int) and cantidad_dias_global > 0:
-            tomados = 0
-            loops = 0
-            max_loop_days = 365 * 2
-            while tomados < cantidad_dias_global and loops < max_loop_days:
-                loops += 1
-                if d.weekday() == 6 or d in festivos_co:
-                    d += timedelta(days=1)
-                    continue
-                slots = generar_slots_para_dia(d, t_desde, t_hasta, slot_minutes, citas_parsed)
-                disponibilidad_por_dia[d.isoformat()] = slots
-                tomados += 1
-                d += timedelta(days=1)
-        else:
-            fecha_fin = hoy + timedelta(days=7)
-            while d <= fecha_fin:
-                if d.weekday() == 6 or d in festivos_co:
-                    d += timedelta(days=1)
-                    continue
-                slots = generar_slots_para_dia(d, t_desde, t_hasta, slot_minutes, citas_parsed)
-                disponibilidad_por_dia[d.isoformat()] = slots
-                d += timedelta(days=1)
+    # 4) Generar slots para cada día válido
+    for di in dias_validos:
+        slots = generar_slots_para_dia(di, t_desde, t_hasta, slot_minutes, citas_parsed)
+        disponibilidad_por_dia[di.isoformat()] = slots
 
     resultado = [{"dia": k, "citas": disponibilidad_por_dia[k]} for k in sorted(disponibilidad_por_dia)]
     print(json.dumps(resultado, ensure_ascii=False, indent=2))

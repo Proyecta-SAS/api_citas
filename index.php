@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// v.9.3 — Acepta payload general (citas, filtro y calendar Bitrix). Soporta Cantidad_dias sin filtro.
+// v.9.4 — Acepta payload general (citas, filtro y calendar Bitrix). Cantidad_dias es global y se aplica antes de dias_habiles.
 
 $body = file_get_contents("php://input");
 if (!$body) {

@@ -238,6 +238,11 @@ def main(argv):
         "minutos": 30,
         "Cantidad_dias": 3,
         "filtro": {
+            "dias_habiles" : ["Lunes", "Miercoles", "Viernes"],
+            "horario" : {
+                "desde": "09:00",
+                "hasta": "17:00"
+            },
             "jornada": 1
         },
         # Se envía el calendario crudo como lo recibiste

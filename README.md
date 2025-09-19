@@ -1,4 +1,4 @@
-#Disponibilidad de citas (PHP + Python) – README v9.3
+#Disponibilidad de citas (PHP + Python) – README v9.4
 
 Sistema sencillo para calcular disponibilidad horaria en los próximos 8 días (desde mañana), excluyendo domingos y festivos de Colombia, a partir de un listado de citas existentes.
 El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays. Soporta:
@@ -108,13 +108,16 @@ Comportamiento:
   - jornada 3: 08:00–17:00
 - Si también envías "horario.desde/hasta", ese horario sobreescribe a la jornada.
 - Si se incluyen "citas", no se listan los slots que se solapen.
-- Si se especifican varios días en "dias_habiles", se devuelven hasta "Cantidad_dias" ocurrencias por cada día de la semana seleccionado.
+- Si envías "Cantidad_dias", primero se toman los próximos N días válidos desde mañana (excluye domingos y festivos) y luego se aplica "dias_habiles" para filtrar esos días.
 - Si no se especifica "dias_habiles", se consideran días laborales (lunes a sábado), excluyendo domingos y festivos.
 
 
-## Cantidad_dias sin filtro (nuevo)
+## Cantidad_dias (global)
 
-Si envías `Cantidad_dias` sin el bloque `filtro`, el sistema devuelve los próximos N días válidos consecutivos a partir de mañana, excluyendo domingos y festivos de Colombia, en lugar de la ventana fija de 8 días.
+`Cantidad_dias` controla cuántos días consecutivos válidos considerar a partir de mañana (excluye domingos y festivos). Esta lógica aplica tanto si envías `filtro` como si no:
+
+- Con `filtro`: se seleccionan los próximos N días válidos y luego se aplican las reglas de `filtro` (por ejemplo, `dias_habiles`, `jornada` o `horario`).
+- Sin `filtro`: se seleccionan los próximos N días válidos con horario por defecto 08:00–17:00.
 
 Ejemplo:
 
@@ -219,6 +222,11 @@ end_minutes = 17 * 60        # 17:00 (exclusivo)
 
 
 #Changelog
+
+- v9.4
+  - Cambio: `Cantidad_dias` es global y se aplica antes de `filtro.dias_habiles`. Se construye primero la lista de N días válidos consecutivos (desde mañana, excluye domingos y festivos) y luego se filtra por `dias_habiles` si existe.
+  - Flujo unificado en `main.py` para generar disponibilidad: días base -> aplicar filtro (si hay) -> generar slots según `minutos` y jornada/horario.
+  - Documentación ajustada a la nueva semántica global de `Cantidad_dias`.
 
 - v9.3
   - Nuevo: `Cantidad_dias` sin `filtro` devuelve los próximos N días válidos consecutivos desde mañana (excluye domingos y festivos de Colombia).
