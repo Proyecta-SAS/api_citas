@@ -30,12 +30,37 @@ Nota rápida: el archivo que recibiste como index.py es código PHP. Renómbralo
 #Endpoint
 
 URL: POST /
-Content-Type: application/json
+Content-Type: application/json (recomendado) o application/x-www-form-urlencoded
 
 
-#Cuerpo de la solicitud (modo "resultado" obligatorio)
+#Cuerpo de la solicitud (formatos aceptados)
 
-El JSON debe incluir el campo "resultado" con las llaves "DATE FROM" y "DATE TO" (también se aceptan variantes con guion bajo). Este rango indica ocupación base sobre la cual se calculará la disponibilidad:
+Puedes enviar el payload en cualquiera de estos formatos. Todos bloquean solapes contra la ocupación entregada:
+
+1) Array Bitrix crudo (solo el calendario):
+
+[
+  {
+    "body": {
+      "result": [ { "DATE_FROM": "27/09/2025 09:20:00", "DATE_TO": "27/09/2025 09:30:00" }, ... ]
+    },
+    "statusCode": 200
+  }
+]
+
+- Con este formato, se usan los valores por defecto: 7 días, 20 minutos, horario 08:00–17:00 (sábado hasta 13:00).
+- Si quieres controlar `minutos`, `Cantidad_dias` o `filtro`, usa el formato 2 o 3.
+
+2) Objeto con `calendar` (recomendado cuando quieres pasar filtros):
+
+{
+  "calendar": [ /* el array Bitrix anterior */ ],
+  "minutos": 30,
+  "Cantidad_dias": 5,
+  "filtro": { /* opcional */ }
+}
+
+3) Objeto con `resultado` (un solo rango base) y opcionalmente `citas`/`calendar` adicionales:
 
 {
   "resultado": {
@@ -46,9 +71,15 @@ El JSON debe incluir el campo "resultado" con las llaves "DATE FROM" y "DATE TO"
   "Cantidad_dias": 5
 }
 
-Además, opcionalmente puedes enviar:
+Además, opcionalmente puedes enviar en el formato 3:
 - "citas.result": lista adicional de ocupaciones
 - "calendar": calendario Bitrix (se transforma internamente a ocupaciones)
+
+4) Form-urlencoded con una variable que contenga el JSON (útil cuando no puedes enviar raw JSON):
+
+payload={...json...}
+
+- También se aceptan los nombres `data` o `json` en lugar de `payload`.
 
 
 
@@ -60,7 +91,7 @@ Cualquier solapamiento con una cita existente bloquea ese intervalo.
 
 #Respuesta (200 OK)
 
-Arreglo de días (desde mañana durante 8 días), cada uno con sus intervalos disponibles:
+Arreglo de días (desde mañana; por defecto 7 días), cada uno con sus intervalos disponibles:
 
 [
   {
@@ -172,17 +203,45 @@ Sin cuerpo en la solicitud:
 
 #Ejemplo con curl
 
+1) JSON crudo: Array Bitrix
+
+curl -X POST http://127.0.0.1:8000/ \
+  -H "Content-Type: application/json" \
+  -d '[{ "body": { "result": [ { "DATE_FROM": "27/09/2025 09:20:00", "DATE_TO": "27/09/2025 09:30:00" } ] }, "statusCode": 200 }]'
+
+2) JSON crudo: Objeto con calendar + filtros
+
 curl -X POST http://127.0.0.1:8000/ \
   -H "Content-Type: application/json" \
   -d '{
-    "citas": {
-      "result": [
-        { "DATE_FROM": "26/08/2025 09:00:00", "DATE_TO": "26/08/2025 10:00:00" },
-        { "DATE_FROM": "27/08/2025 14:30:00", "DATE_TO": "27/08/2025 16:00:00" }
-      ]
+    "calendar": [{ "body": { "result": [ { "DATE_FROM": "29/09/2025 08:20:00", "DATE_TO": "29/09/2025 08:35:00" } ] } }],
+    "minutos": 30,
+    "Cantidad_dias": 5,
+    "filtro": {
+      "dias_habiles": ["Lunes", "Miercoles", "Viernes"],
+      "jornada": 1
     }
   }'
 
+3) JSON crudo: Objeto con resultado
+
+curl -X POST http://127.0.0.1:8000/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resultado": { "DATE FROM": "09/09/2025 09:00:00", "DATE TO": "09/09/2025 17:00:00" },
+    "minutos": 20,
+    "Cantidad_dias": 7
+  }'
+
+4) Form-urlencoded: payload con JSON
+
+curl -X POST http://127.0.0.1:8000/ \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode 'payload={
+    "resultado": { "DATE FROM": "09/09/2025 09:00:00", "DATE TO": "09/09/2025 17:00:00" },
+    "minutos": 30,
+    "Cantidad_dias": 5
+  }'
 
 
 #Cómo funciona

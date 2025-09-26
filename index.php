@@ -19,14 +19,37 @@ if (!$body) {
     exit;
 }
 
+// Intento 1: JSON crudo
 $data = json_decode($body, true);
+
+// Intento 2: si no es JSON, probar como form-urlencoded (payload=..., data=..., json=...)
+if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+    $form = [];
+    parse_str($body, $form);
+    $candidate = null;
+    foreach (["payload", "data", "json"] as $k) {
+        if (isset($form[$k]) && is_string($form[$k])) {
+            $candidate = $form[$k];
+            break;
+        }
+    }
+    if ($candidate !== null) {
+        $data2 = json_decode($candidate, true);
+        if ($data2 !== null || json_last_error() === JSON_ERROR_NONE) {
+            $data = $data2;
+        }
+    }
+}
+
 if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
     http_response_code(400);
-    echo json_encode(["error" => "JSON inválido en el cuerpo de la solicitud"]);
+    echo json_encode([
+        "error" => "Cuerpo no válido: se espera JSON crudo o form-urlencoded con 'payload'|'data'|'json'",
+    ]);
     exit;
 }
 
-// Ya no exigimos estructura mínima: puede venir 'citas', 'filtro', 'calendar',
+// Puede venir 'citas', 'filtro', 'calendar', 'resultado',
 // o incluso un arreglo de eventos (result) o arreglo Bitrix.
 // Pasamos el payload completo a Python para normalizar.
 $payload_json = json_encode($data);
