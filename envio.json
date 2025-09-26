@@ -1,7 +1,7 @@
 {
     "resultado" : {
-        "mensaje": "Hola Mundo",
-        "fachada": "v1.0"
+        "DATE FROM" : "9/09/2025 19:00:00",
+        "DATE TO" : "9/09/2025 17:00:00"   
     },
 
     "minutos": 30,

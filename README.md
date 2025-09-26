@@ -1,8 +1,8 @@
-#Disponibilidad de citas (PHP + Python) – README v9.4
+#Disponibilidad de citas (PHP + Python) – README v9.5
 
-Sistema sencillo para calcular disponibilidad horaria en los próximos 8 días (desde mañana), excluyendo domingos y festivos de Colombia, a partir de un listado de citas existentes.
-El endpoint está en PHP y delega el cálculo a un script Python que usa la librería holidays. Soporta:
-- Modo clásico (con citas existentes)
+Sistema sencillo para calcular disponibilidad horaria desde mañana, excluyendo domingos y festivos de Colombia. Soporta:
+- Modo "resultado" (ocupación mínima obligatoria con un rango)
+- Modo clásico (citas existentes)
 - Modo por filtros (similar a envio.json)
 - Calendario estilo Bitrix (calendar[].body.result)
 
@@ -33,25 +33,22 @@ URL: POST /
 Content-Type: application/json
 
 
-#Cuerpo de la solicitud (modo clásico)
+#Cuerpo de la solicitud (modo "resultado" obligatorio)
 
-El JSON debe incluir el campo citas.
-Dentro de citas se espera un objeto con el arreglo result, donde cada elemento contiene DATE_FROM y DATE_TO en formato DD/MM/YYYY HH:MM:SS.
+El JSON debe incluir el campo "resultado" con las llaves "DATE FROM" y "DATE TO" (también se aceptan variantes con guion bajo). Este rango indica ocupación base sobre la cual se calculará la disponibilidad:
 
 {
-  "citas": {
-    "result": [
-      {
-        "DATE_FROM": "26/08/2025 09:00:00",
-        "DATE_TO":   "26/08/2025 10:00:00"
-      },
-      {
-        "DATE_FROM": "27/08/2025 14:30:00",
-        "DATE_TO":   "27/08/2025 16:00:00"
-      }
-    ]
-  }
+  "resultado": {
+    "DATE FROM": "09/09/2025 09:00:00",
+    "DATE TO":   "09/09/2025 17:00:00"
+  },
+  "minutos": 30,
+  "Cantidad_dias": 5
 }
+
+Además, opcionalmente puedes enviar:
+- "citas.result": lista adicional de ocupaciones
+- "calendar": calendario Bitrix (se transforma internamente a ocupaciones)
 
 
 
@@ -80,23 +77,19 @@ Arreglo de días (desde mañana durante 8 días), cada uno con sus intervalos di
 ]
 
 
-## Modo por filtros (nuevo)
+## Modo por filtros
 
-Permite definir días hábiles específicos, horario y tamaño de slot, y limitar cuántas ocurrencias por día de la semana devolver.
+Permite definir días hábiles específicos, horario y tamaño de slot.
 
 Payload de ejemplo (similar a envio.json):
 
 {
+  "resultado": { "DATE FROM": "22/09/2025 09:00:00", "DATE TO": "22/09/2025 17:00:00" },
   "minutos": 30,
   "Cantidad_dias": 3,
   "filtro": {
     "dias_habiles": ["Lunes"],
     "jornada": 1
-  },
-  "citas": {  // opcional: bloquea solapes si se incluye
-    "result": [
-      { "DATE_FROM": "23/09/2025 09:00:00", "DATE_TO": "23/09/2025 10:00:00" }
-    ]
   }
 }
 
@@ -108,27 +101,33 @@ Comportamiento:
   - jornada 3: 08:00–17:00
 - Si también envías "horario.desde/hasta", ese horario sobreescribe a la jornada.
 - Si se incluyen "citas", no se listan los slots que se solapen.
-- Si envías "Cantidad_dias", primero se toman los próximos N días válidos desde mañana (excluye domingos y festivos) y luego se aplica "dias_habiles" para filtrar esos días.
-- Si no se especifica "dias_habiles", se consideran días laborales (lunes a sábado), excluyendo domingos y festivos.
+- Si envías "Cantidad_dias" y también "dias_habiles", se seleccionan los próximos N días que cumplan con esos días de la semana (desde mañana), excluyendo domingos y festivos.
+- Si envías "Cantidad_dias" pero no "dias_habiles", se seleccionan los próximos N días válidos (lunes a sábado), excluyendo domingos y festivos.
+- Regla especial de sábado: la disponibilidad se limita hasta las 13:00, incluso si el horario/jornada indique una franja mayor.
+
+### Prioridad: horario vs jornada
+- Prioridad: `horario` tiene prioridad sobre `jornada` (si viene `horario`, se usa ese rango exacto).
+- Si `horario` viene incompleto, se completa con la `jornada` definida; si no hay `jornada`, se usa 08:00–17:00 como complemento.
+- Ejemplos:
+  - `horario.desde = 09:00`, sin `horario.hasta` y `jornada = 1` → rango final 09:00–12:00.
+  - `horario.hasta = 16:00`, sin `horario.desde` y sin `jornada` → rango final 08:00–16:00.
+  - En sábado, el rango final nunca excede 13:00.
 
 
 ## Cantidad_dias (global)
 
-`Cantidad_dias` controla cuántos días consecutivos válidos considerar a partir de mañana (excluye domingos y festivos). Esta lógica aplica tanto si envías `filtro` como si no:
+`Cantidad_dias` controla cuántos días devolver a partir de mañana (excluye domingos y festivos):
 
-- Con `filtro`: se seleccionan los próximos N días válidos y luego se aplican las reglas de `filtro` (por ejemplo, `dias_habiles`, `jornada` o `horario`).
-- Sin `filtro`: se seleccionan los próximos N días válidos con horario por defecto 08:00–17:00.
+- Con `dias_habiles`: se seleccionan los próximos N días que coincidan con esos días de la semana.
+- Sin `dias_habiles`: se seleccionan los próximos N días válidos (lunes a sábado).
+- Si no envías `Cantidad_dias`, el predeterminado es 7 días.
 
 Ejemplo:
 
 {
+  "resultado": { "DATE FROM": "26/09/2025 09:00:00", "DATE TO": "26/09/2025 17:00:00" },
   "Cantidad_dias": 3,
-  "minutos": 20,
-  "citas": {
-    "result": [
-      { "DATE_FROM": "26/09/2025 09:00:00", "DATE_TO": "26/09/2025 10:00:00" }
-    ]
-  }
+  "minutos": 20
 }
 
 Si hoy es lunes, retornará disponibilidad para martes, miércoles y jueves.
@@ -136,7 +135,7 @@ Si hoy es lunes, retornará disponibilidad para martes, miércoles y jueves.
 
 ## Calendario estilo Bitrix (nuevo)
 
-Además del bloque "citas", puedes enviar el calendario crudo obtenido de Bitrix en este shape, y el backend lo transformará internamente para bloquear solapes:
+Además del bloque "resultado", puedes enviar el calendario crudo obtenido de Bitrix en este shape; el backend lo transformará a ocupaciones y las combinará con "resultado":
 
 "calendar": [
   {
@@ -223,25 +222,18 @@ end_minutes = 17 * 60        # 17:00 (exclusivo)
 
 #Changelog
 
+- v9.5
+  - Nuevo: soporte de ocupación en `resultado` con llaves "DATE FROM" / "DATE TO".
+  - Cambio: si hay `dias_habiles` y `Cantidad_dias`, se seleccionan los próximos N días que cumplan con esos días.
+  - Regla de sábado: disponibilidad hasta las 13:00, aunque el horario/jornada exceda.
+  - Predeterminado: 7 días y 20 minutos de slot cuando no se especifica.
+
 - v9.4
-  - Cambio: `Cantidad_dias` es global y se aplica antes de `filtro.dias_habiles`. Se construye primero la lista de N días válidos consecutivos (desde mañana, excluye domingos y festivos) y luego se filtra por `dias_habiles` si existe.
-  - Flujo unificado en `main.py` para generar disponibilidad: días base -> aplicar filtro (si hay) -> generar slots según `minutos` y jornada/horario.
-  - Documentación ajustada a la nueva semántica global de `Cantidad_dias`.
+  - Ajustes de `Cantidad_dias` y flujo de filtros.
 
-- v9.3
-  - Nuevo: `Cantidad_dias` sin `filtro` devuelve los próximos N días válidos consecutivos desde mañana (excluye domingos y festivos de Colombia).
-  - `minutos` actúa globalmente para el tamaño de slot (si no se especifica, por defecto 20).
-  - Documentación actualizada (ejemplos Postman y calendario Bitrix).
-
-- v9.2
-  - Agregado modo por filtros (`filtro.dias_habiles`, `filtro.jornada`/`filtro.horario`).
-  - Soporte de calendario estilo Bitrix (`calendar[].body.result`).
-  - Combinación de `citas` + `calendar` para bloquear solapes.
+Ejemplo de rango base:
 
 hoy = datetime.now().date() + timedelta(days=1)
-fecha_fin = hoy + timedelta(days=7)
-
-festivos = holidays.CountryHoliday('CO', years=[año])
 
 
 #Seguridad y notas
@@ -254,7 +246,7 @@ Considera limitar tamaño de payload y rate limiting si el endpoint se expone p�
 
 Zonas horarias: el código usa la hora del sistema (datetime.now()); alinéala con tu operación (ej. America/Bogota).
 
-Cambio de año: actualmente se cargan festivos solo del año actual. Si el rango cruzara fin de año, extiende years=[año, año+1].
+Festivos: se usan de Colombia sin limitar por año, para cubrir rangos amplios.
 
 
 #Solución de problemas

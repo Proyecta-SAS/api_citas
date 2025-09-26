@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date, time
 import holidays
 import sys
 
-# V.9.4 — Modo clásico (citas) + modo filtros (envio.json) + calendario Bitrix (calendar[].body.result)
+# V.9.5 — Soporta 'resultado' (DATE FROM/DATE TO) como ocupación, selección de días acorde a dias_habiles y sábados hasta 13:00.
 
 
 def normalizar_dia_es(d: str) -> str:
@@ -39,6 +39,25 @@ def parsear_citas(citas_json):
             })
         except Exception:
             continue
+    return citas
+
+
+def parsear_resultado(payload_dict):
+    """Extrae un intervalo de ocupación desde payload['resultado'].
+    Soporta claves con y sin espacio: 'DATE FROM'/'DATE TO' o 'DATE_FROM'/'DATE_TO'.
+    Retorna lista con a lo sumo un dict {DATE_FROM, DATE_TO}.
+    """
+    citas = []
+    if not isinstance(payload_dict, dict):
+        return citas
+    res = payload_dict.get("resultado")
+    if not isinstance(res, dict):
+        return citas
+    # Prioridad a claves con espacio si existen
+    df = res.get("DATE FROM") if "DATE FROM" in res else res.get("DATE_FROM")
+    dt = res.get("DATE TO") if "DATE TO" in res else res.get("DATE_TO")
+    if isinstance(df, str) and isinstance(dt, str):
+        citas.append({"DATE_FROM": df, "DATE_TO": dt})
     return citas
 
 
@@ -90,8 +109,14 @@ def hay_interseccion(a_inicio: datetime, a_fin: datetime, b_inicio: datetime, b_
 
 
 def generar_slots_para_dia(d: date, t_desde: time, t_hasta: time, slot_minutes: int, citas_parsed):
+    # Regla: sábados (weekday==5) solo hasta las 13:00, incluso si el horario/jornada define mayor rango
+    cap_sabado = time(13, 0, 0)
+    t_hasta_real = t_hasta
+    if d.weekday() == 5 and (t_hasta > cap_sabado):
+        t_hasta_real = cap_sabado
+
     inicio_dt = datetime.combine(d, t_desde)
-    fin_dt = datetime.combine(d, t_hasta)
+    fin_dt = datetime.combine(d, t_hasta_real)
     if fin_dt <= inicio_dt:
         return []
 
@@ -154,10 +179,12 @@ def main():
     if isinstance(payload, dict) and isinstance(payload.get("minutos"), int) and payload["minutos"] > 0:
         slot_minutes = int(payload["minutos"])
 
-    # Citas existentes (opcional) y/o calendario Bitrix (opcional)
+    # Citas existentes (opcional) y/o calendario Bitrix (opcional) y/o resultado (requerido según nueva especificación)
     citas_parsed = []
     citas_fuente = []
     if isinstance(payload, dict):
+        # 'resultado' como ocupación base (un solo intervalo)
+        citas_fuente.extend(parsear_resultado(payload))
         if "citas" in payload:
             citas_fuente.extend(parsear_citas(payload.get("citas", {})))
         if "calendar" in payload:
@@ -214,30 +241,31 @@ def main():
                 if key in SPANISH_DAY_TO_WEEKDAY:
                     dias_wd_filtro.add(SPANISH_DAY_TO_WEEKDAY[key])
 
-    # 2) Construir lista de días válidos base según Cantidad_dias (o ventana por defecto)
+    # 2) Construir lista de días válidos base según Cantidad_dias y dias_habiles
+    #    - Siempre excluir domingos (weekday==6) y festivos
+    #    - Si hay dias_habiles, seleccionar los próximos N días que cumplan con esos días de la semana
+    #    - Si no hay dias_habiles, seleccionar los próximos N días válidos
+    target_count = None
+    try:
+        target_count = int(cantidad_dias_global) if cantidad_dias_global is not None else 7
+    except Exception:
+        target_count = 7
+
     dias_validos = []
     d = hoy
     max_loop_days = 365 * 2
     loops = 0
-    if isinstance(cantidad_dias_global, int) and cantidad_dias_global > 0:
-        while len(dias_validos) < cantidad_dias_global and loops < max_loop_days:
-            loops += 1
-            if d.weekday() != 6 and d not in festivos_co:
+    while len(dias_validos) < target_count and loops < max_loop_days:
+        loops += 1
+        if d.weekday() != 6 and d not in festivos_co:
+            if isinstance(dias_wd_filtro, set) and dias_wd_filtro:
+                if d.weekday() in dias_wd_filtro:
+                    dias_validos.append(d)
+            else:
                 dias_validos.append(d)
-            d += timedelta(days=1)
-    else:
-        fecha_fin = hoy + timedelta(days=7)
-        while d <= fecha_fin and loops < max_loop_days:
-            loops += 1
-            if d.weekday() != 6 and d not in festivos_co:
-                dias_validos.append(d)
-            d += timedelta(days=1)
+        d += timedelta(days=1)
 
-    # 3) Aplicar filtro de días hábiles si corresponde
-    if isinstance(dias_wd_filtro, set) and dias_wd_filtro:
-        dias_validos = [di for di in dias_validos if di.weekday() in dias_wd_filtro]
-
-    # 4) Generar slots para cada día válido
+    # 3) Generar slots para cada día válido
     for di in dias_validos:
         slots = generar_slots_para_dia(di, t_desde, t_hasta, slot_minutes, citas_parsed)
         disponibilidad_por_dia[di.isoformat()] = slots
